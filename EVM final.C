@@ -1,0 +1,321 @@
+#include <reg51.h>
+#define TOT_CANDIDATES 10
+
+sbit MENU_CLR = P2 ^ 0; // Input pins for menu
+sbit MENU_BLT = P2 ^ 1;
+sbit MENU_CLS = P2 ^ 2;
+sbit MENU_CNT = P2 ^ 3;
+
+unsigned int vcount[TOT_CANDIDATES] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Array to store vote
+
+// Keypad Connections
+sbit R1 = P0 ^ 0;
+sbit R2 = P0 ^ 1;
+sbit R3 = P0 ^ 2;
+sbit R4 = P0 ^ 3;
+sbit C1 = P0 ^ 6;
+sbit C2 = P0 ^ 5;
+sbit C3 = P0 ^ 4;
+
+sbit DISP_EN = P0 ^ 7;
+
+sbit DISP_SEL0 = P3 ^ 3;
+sbit DISP_SEL1 = P3 ^ 4;
+unsigned int digi_val[10] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90};
+bit isClosed = 0;
+
+void delay(unsigned int count) // Time delay function
+{
+	unsigned int j, k;
+	for (j = 0; j <= count; j++)
+		for (k = 0; k <= 500; k++)
+			;
+}
+
+void display_sel(unsigned int val)
+{
+	if (val == 0)
+	{
+		DISP_SEL0 = 0;
+		DISP_SEL1 = 0;
+	}
+	if (val == 1)
+	{
+		DISP_SEL0 = 1;
+		DISP_SEL1 = 0;
+	}
+	if (val == 2)
+	{
+		DISP_SEL0 = 0;
+		DISP_SEL1 = 1;
+	}
+	if (val == 3)
+	{
+		DISP_SEL0 = 1;
+		DISP_SEL1 = 1;
+	}
+}
+// to display for a time interval
+void display_for_time(unsigned int val, unsigned int time)
+{
+	unsigned int i, j, k, tmp;
+	for (j = 0; j < time; j++)
+	{
+		for (i = 0; i < 5; i++)
+		{
+			tmp = val;
+			for (k = 0; k < 4; k++)
+			{
+				display_sel(k);
+				P1 = digi_val[tmp % 10];
+				tmp = tmp / 10;
+				delay(20);
+				P1 = 0xFF;
+			}
+		}
+	}
+}
+
+void display_summary(unsigned int sl_no)
+{
+	unsigned int i, j, k, tmp;
+	for (j = 0; j < 2; j++)
+	{
+		for (i = 0; i < 5; i++)
+		{
+			tmp = vcount[sl_no];
+			for (k = 0; k < 4; k++)
+			{
+				display_sel(k);
+				if (k == 3)
+					P1 = digi_val[sl_no % 10];
+				else
+					P1 = digi_val[tmp % 10];
+				tmp /= 10;
+				delay(20);
+				P1 = 0xFF;
+			}
+		}
+	}
+}
+
+void count()
+{
+	unsigned int i;
+	for (i = 0; i < TOT_CANDIDATES; i++)
+	{
+		display_summary(i);
+	}
+}
+void display_char(unsigned int val)
+{
+	unsigned int dp = 0xbf;
+	unsigned int i;
+	if (val == 0)
+		dp = 0x3f;
+	for (i = 0; i < 4; i++)
+	{
+		display_sel(i);
+		P1 = 0xbf;
+		delay(20);
+		P1 = 0xFF;
+	}
+}
+
+unsigned int read_keypad()
+{
+	while (1)
+	{
+		R2 = 1;
+		R3 = 1;
+		R4 = 1;
+		if (C1 == 0)
+		{
+			delay(100);
+			while (C1 == 0)
+				;
+			return 0;
+		}
+		if (C2 == 0)
+		{
+			delay(100);
+			while (C2 == 0)
+				;
+			return 0;
+		}
+		if (C3 == 0)
+		{
+			delay(100);
+			while (C3 == 0)
+				;
+			return 0;
+		}
+		R1 = 1;
+		R2 = 0;
+		R3 = 1;
+		R4 = 1;
+		if (C1 == 0)
+		{
+			delay(100);
+			while (C1 == 0)
+				;
+			return 7;
+		}
+		if (C2 == 0)
+		{
+			delay(100);
+			while (C2 == 0)
+				;
+			return 8;
+		}
+		if (C3 == 0)
+		{
+			delay(100);
+			while (C3 == 0)
+				;
+			return 9;
+		}
+		R1 = 1;
+		R2 = 1;
+		R3 = 0;
+		R4 = 1;
+		if (C1 == 0)
+		{
+			delay(100);
+			while (C1 == 0)
+				;
+			return 4;
+		}
+		if (C2 == 0)
+		{
+			delay(100);
+			while (C2 == 0)
+				;
+			return 5;
+		}
+		if (C3 == 0)
+		{
+			delay(100);
+			while (C3 == 0)
+				;
+			return 6;
+		}
+		R1 = 1;
+		R2 = 1;
+		R3 = 1;
+		R4 = 0;
+		if (C1 == 0)
+		{
+			delay(100);
+			while (C1 == 0)
+				;
+			return 1;
+		}
+		if (C2 == 0)
+		{
+			delay(100);
+			while (C2 == 0)
+				;
+			return 2;
+		}
+		if (C3 == 0)
+		{
+			delay(100);
+			while (C3 == 0)
+				;
+			return 3;
+		}
+	}
+}
+
+void cast_vote()
+{
+	unsigned int vote = read_keypad();
+	vcount[vote]++;
+	display_for_time(vote, 2);
+	display_char(1);
+}
+
+void clear_votes()
+{
+	unsigned int i;
+	for (i = 0; i < TOT_CANDIDATES; i++)
+	{
+		vcount[i] = 0;
+	}
+}
+
+void menu(unsigned int current_choice)
+{
+	unsigned int digi_choice;
+	digi_choice = current_choice;
+	if (digi_choice == 1)
+	{
+		if (isClosed == 1)
+		{
+			clear_votes();
+			isClosed = 0;
+		}
+	}
+	if (digi_choice == 2)
+	{
+		cast_vote();
+	}
+	if (digi_choice == 3)
+	{
+		isClosed = 1;
+	}
+	if (digi_choice == 4)
+	{
+		if (isClosed == 1)
+			count();
+	}
+}
+unsigned int read_menu()
+{
+	if (MENU_CLR == 0)
+	{
+		while (MENU_CLR == 0)
+			;
+		return 1;
+	}
+	if (MENU_BLT == 0)
+	{
+		while (MENU_BLT == 0)
+			;
+		return 2;
+	}
+	if (MENU_CLS == 0)
+	{
+		while (MENU_CLS == 0)
+			;
+		return 3;
+	}
+	if (MENU_CNT == 0)
+	{
+		while (MENU_CNT == 0)
+			;
+		return 4;
+	}
+	return 0;
+}
+
+void main()
+{
+	unsigned int menu_choice = 0;
+	isClosed = 0;
+	while (1)
+	{
+		menu_choice = read_menu();
+		if (menu_choice != 0)
+		{
+			menu(menu_choice);
+			menu_choice = 0;
+		}
+		else
+		{
+			display_char(1);
+		}
+	}
+
+} // end of main block
